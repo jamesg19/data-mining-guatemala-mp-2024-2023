@@ -1,0 +1,52 @@
+---
+title: "Project Phase-1"
+output: html_notebook
+author: "James Gramajo"
+---
+
+
+1 Importacion de liberias
+
+```{r}
+install.packages("arules")
+install.packages("readxl")
+library(arules)
+library(readxl)
+```
+
+
+2. Cargar el conjunto de datos
+```{r}
+data <- read_excel("Data\\mp-sindicados-2024.xlsx")
+data <- data[, -2]
+```
+```{r}
+# Filtra para mantener solo las filas donde 'año_hecho' es igual a 2024
+data <- data[data$año_hecho == 2024, ]
+head(data)
+data <- data[, -7]
+head(data)
+
+```
+
+
+
+```{r}
+# se omite año y Nivel_Academico,
+
+columnas_de_interes <- c("CARRERA","Departamento", "Sexo", "Sector", "Pueblo_Pertenencia","Edad")
+data_subset <- data[, columnas_de_interes]
+
+data_factores <- as.data.frame(lapply(data_subset, as.factor))
+
+# 5. Crear el objeto de transacciones
+transactions <- as(data_factores, "transactions")
+
+# 6. Ejecutar el algoritmo Apriori usado en clase
+rules <- apriori(transactions,
+                 parameter = list(support = 0.2, confidence = 0.5, minlen = 2))
+
+# 7. Inspeccionar las reglas más interesantes (ordenadas por lift)
+interesting_rules <- sort(rules, by = "lift", decreasing = TRUE)
+inspect(head(interesting_rules, 100))
+```
