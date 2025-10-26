@@ -3,7 +3,7 @@ Data Mining Project (USAC). Analysis of Criminal Acts in Guatemala (emphasis MP)
 
 
 
-# 🧩 Documentación Técnica — Proyecto *Project Phase-1*
+# Documentación Técnica — Proyecto *Project Phase-1*
 
 **Autor:** James Gramajo  
 **Lenguaje:** R (versión 4.5.1)  
@@ -13,14 +13,14 @@ Data Mining Project (USAC). Analysis of Criminal Acts in Guatemala (emphasis MP)
 
 ---
 
-## 📘 1. Descripción General
+## 1. Descripción General
 
 El presente documento describe la configuración técnica y ejecución del proyecto **Project Phase-1**, desarrollado en **RStudio** con **R versión 4.5.1**.  
 El objetivo principal es aplicar el algoritmo de **reglas de asociación (Apriori)** al conjunto de datos *mp-sindicados-2024.xlsx*, para descubrir relaciones significativas entre variables categóricas.
 
 ---
 
-## ⚙️ 2. Requisitos del Entorno
+## 2. Requisitos del Entorno
 
 ### 2.1 Versión del Lenguaje
 - **R:** 4.5.1  
