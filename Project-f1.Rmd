@@ -1,6 +1,5 @@
 ---
 title: "Project Phase-1"
-output: html_notebook
 author: "James Gramajo"
 ---
 
@@ -8,8 +7,9 @@ author: "James Gramajo"
 1 Importacion de liberias
 
 ```{r}
-install.packages("arules")
-install.packages("readxl")
+# Instalar solo si no estan instalados previamnte
+if(!require(arules)) install.packages("arules")
+if(!require(readxl)) install.packages("readxl")
 library(arules)
 library(readxl)
 ```
@@ -17,36 +17,103 @@ library(readxl)
 
 2. Cargar el conjunto de datos
 ```{r}
-data <- read_excel("Data\\mp-sindicados-2024.xlsx")
-data <- data[, -2]
-```
-```{r}
-# Filtra para mantener solo las filas donde 'año_hecho' es igual a 2024
-data <- data[data$año_hecho == 2024, ]
-head(data)
-data <- data[, -7]
-head(data)
+data_sindicados_unida <- read_excel("Data\\mp-sindicados-2024-2023.xlsx")
+#ELiminar año_denuncia
+#data_sindicados_unida <- data_sindicados_unida[, -2]
+
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2024
+data_sindicados_2024 <- data_sindicados_unida[data_sindicados_unida$año_hecho == 2024, ]
+#Elimino columna de "año_hecho" sabiendo que filtro por año_hecho=2024
+data_sindicados_2024 <- data_sindicados_2024[, -5]
+
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2023
+data_sindicados_2023 <- data_sindicados_unida[data_sindicados_unida$año_hecho == 2023, ]
+#Elimino columna de "año_hecho" sabiendo que filtro por año_hecho=2023
+
+#data_sindicados_2023 <- data_sindicados_2023[, -2]
+#data_sindicados_2023 <- data_sindicados_2023[, -5]
+#head(data_sindicados_2024)
+head(data_sindicados_2023)
 
 ```
 
 
+3 Implementanto algoritmo Apriori
 
+3.1 Apriori 2024 Sindicados
 ```{r}
-# se omite año y Nivel_Academico,
 
-columnas_de_interes <- c("CARRERA","Departamento", "Sexo", "Sector", "Pueblo_Pertenencia","Edad")
-data_subset <- data[, columnas_de_interes]
+# Se agregan las columnas de interes
+columnas_de_interes <- c(
+  "dia_sem_hecho",
+  "depto_ocu_hecho",
+  "zona_ocu_hecho",
+  "sexo_sindicados",
+  "est_conyugal",
+  "delito_com",
+  "principales_delitos"
+)
+
+data_subset <- data_sindicados_2024[, columnas_de_interes]
+
+data_factores <- as.data.frame(lapply(data_subset, as.factor))
+# Crear el objeto de transacciones
+transactions <- as(data_factores, "transactions")
+
+# Ejecutar el algoritmo Apriori usado en clase
+rules <- apriori(transactions,
+                 parameter = list(support = 0.2, confidence = 0.5, minlen = 2))
+# Inspeccionar las reglas más interesantes (ordenadas por lift)
+interesting_rules <- sort(rules, by = "lift", decreasing = TRUE)
+inspect(head(interesting_rules, 100))
+```
+
+3.2 Apriori en 2024 Sindicados
+```{r}
+
+columnas_de_interes <- c(
+  "depto_ocu_hecho",
+  "mupio_ocu_hecho",
+
+  "sexo_sindicados",
+  "principales_delitos"
+  )
+
+data_subset <- data_sindicados_2024[, columnas_de_interes]
 
 data_factores <- as.data.frame(lapply(data_subset, as.factor))
 
-# 5. Crear el objeto de transacciones
+# Crear el objeto de transacciones
 transactions <- as(data_factores, "transactions")
 
-# 6. Ejecutar el algoritmo Apriori usado en clase
+# Ejecutar el algoritmo Apriori usado en clase
 rules <- apriori(transactions,
-                 parameter = list(support = 0.2, confidence = 0.5, minlen = 2))
+                 parameter = list(support = 0.1, confidence = 0.1, minlen = 2))
+# Inspeccionar las reglas más interesantes (ordenadas por lift)
+interesting_rules <- sort(rules, by = "lift", decreasing = TRUE)
+inspect(head(interesting_rules, 10))
+```
+3.3 Apirori 2023 Sindicados
+```{r}
+columnas_de_interes <- c(
+  "año_denuncia",
+  "año_hecho",
+  "delito_com",
+  "depto_ocu_hecho"
+  )
 
-# 7. Inspeccionar las reglas más interesantes (ordenadas por lift)
+data_subset <- data_sindicados_2023[, columnas_de_interes]
+
+data_factores <- as.data.frame(lapply(data_subset, as.factor))
+
+# Crear el objeto de transacciones
+transactions <- as(data_factores, "transactions")
+
+# Ejecutar el algoritmo Apriori usado en clase
+rules <- apriori(transactions,
+                 parameter = list(support = 0.2, confidence = 0.4, minlen = 2))
+
+# Inspeccionar las reglas más interesantes (ordenadas por lift)
 interesting_rules <- sort(rules, by = "lift", decreasing = TRUE)
 inspect(head(interesting_rules, 100))
 ```
