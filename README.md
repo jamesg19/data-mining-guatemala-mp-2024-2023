@@ -42,7 +42,7 @@ El objetivo principal es aplicar el algoritmo de **reglas de asociación (Aprior
 ```r
 install.packages("arules")
 install.packages("readxl")
-
+```
 # Cargar archivo (asegurarse que sea la ruta correcta si descargas el repo no deberia variar)
 
 data_sindicados_unida <- read_excel("Data\mp-sindicados-2024-2023.xlsx")
