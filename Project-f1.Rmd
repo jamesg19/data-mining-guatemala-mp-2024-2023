@@ -10,35 +10,34 @@ author: "James Gramajo"
 # Instalar solo si no estan instalados previamnte
 if(!require(arules)) install.packages("arules")
 if(!require(readxl)) install.packages("readxl")
+if(!require(readxl)) install.packages("fim4r")
 library(arules)
 library(readxl)
+library(fim4r)
 ```
 
 
 2. Cargar el conjunto de datos
 ```{r}
+
 data_sindicados_unida <- read_excel("Data\\mp-sindicados-2024-2023.xlsx")
 #ELiminar año_denuncia
 #data_sindicados_unida <- data_sindicados_unida[, -2]
 
 # Filtro para mantener solo las filas donde 'año_hecho' es igual a 2024
 data_sindicados_2024 <- data_sindicados_unida[data_sindicados_unida$año_hecho == 2024, ]
-#Elimino columna de "año_hecho" sabiendo que filtro por año_hecho=2024
-data_sindicados_2024 <- data_sindicados_2024[, -5]
-
 # Filtro para mantener solo las filas donde 'año_hecho' es igual a 2023
 data_sindicados_2023 <- data_sindicados_unida[data_sindicados_unida$año_hecho == 2023, ]
-#Elimino columna de "año_hecho" sabiendo que filtro por año_hecho=2023
 
-#data_sindicados_2023 <- data_sindicados_2023[, -2]
-#data_sindicados_2023 <- data_sindicados_2023[, -5]
-#head(data_sindicados_2024)
-head(data_sindicados_2023)
+
+
+
+head(data_sindicados_unida)
 
 ```
 
 
-3 Implementanto algoritmo Apriori
+3 Reglas de asociación Apriori
 
 3.1 Apriori 2024 Sindicados
 ```{r}
@@ -116,4 +115,68 @@ rules <- apriori(transactions,
 # Inspeccionar las reglas más interesantes (ordenadas por lift)
 interesting_rules <- sort(rules, by = "lift", decreasing = TRUE)
 inspect(head(interesting_rules, 100))
+```
+
+4 Reglas de asociación FP-Growth
+4.1 FPGrowth sindicados 2023 
+```{r}
+
+#Seleccionando columnas para analisis
+data_fp <- data_sindicados_2023[, c(
+  "dia_sem_hecho",
+  "depto_ocu_hecho",
+
+  "delito_com"
+  
+)]
+
+
+
+reglas_fp <- fim4r(data_fp,method = "fpgrowth",target = "rules",supp = 0.2,conf = 0.5)
+
+#Reglas en un Dataframe
+rf <- as(reglas_fp, "data.frame")
+
+
+rf_ordenadas <- rf[order(-rf$lift), ]
+
+# --- 8. Mostrar las 10 reglas principales ---
+head(rf_ordenadas, 20)
+
+```
+Carga de datos de agraviados para analisis
+```{r}
+data_agraviados_unida <- read_excel("Data\\mp-agraviados-2024-2023.xlsx")
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2024
+data_agraviados_2024 <- data_agraviados_unida[data_agraviados_unida$año_hecho == 2024, ]
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2023
+data_agraviados_2023 <- data_agraviados_unida[data_agraviados_unida$año_hecho == 2023, ]
+```
+
+4.2 FPGrowth agraviados 2024
+```{r}
+
+#Seleccionando columnas para analisis
+data_fp <- data_agraviados_2024[, c(
+  "mes_hecho",
+  "dia_hecho",
+  "reg_mes",
+  "dia_denuncia",
+  "delito_com",
+  "depto_ocu_hecho"
+  
+)]
+
+
+reglas_fp <- fim4r(data_fp,method = "fpgrowth",target = "rules",supp = 0.2,conf = 0.5)
+
+#Reglas en un Dataframe
+rf <- as(reglas_fp, "data.frame")
+
+
+rf_ordenadas <- rf[order(-rf$lift), ]
+
+# --- 8. Mostrar las 10 reglas principales ---
+head(rf_ordenadas, 20)
+
 ```
