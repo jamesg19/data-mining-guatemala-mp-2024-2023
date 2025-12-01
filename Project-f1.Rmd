@@ -351,7 +351,7 @@ data_sind_sex_edad <- data_sind_edad_mes_clean[, c(
 
 # Ejecutar el método del codo
 # Determinar numero de cluster por metodo del codo
-wss_plot(data_sind_edad_mes,6)
+wss_plot(data_sind_sex_edad,6)
 ```
 
 

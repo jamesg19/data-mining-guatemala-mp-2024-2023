@@ -1,0 +1,332 @@
+---
+title: "Project Phase-2"
+author: "James Gramajo"
+---
+
+Fase 2 Mineria de Datos
+
+1 Importacion de liberias
+
+```{r}
+# Instalar solo si no estan instalados previamente
+#if(!require(arules)) install.packages("arules")
+#if(!require(readxl)) install.packages("readxl")
+#if(!require(fim4r)) install.packages("fim4r")
+#if(!require(ggplot2)) install.packages("ggplot2")
+#if(!require(ggalt)) install.packages("ggalt")
+#if(!require(rpart)) install.packages("rpart")
+#if(!require(rpart.plot)) install.packages("rpart.plot")
+
+
+#Importar liberias
+#library(arules)
+#library(readxl)
+#library(fim4r)
+#library(ggplot2)
+#library(ggalt)
+#library(rpart)
+#library(rpart.plot)
+install.packages("arules")
+install.packages("readxl")
+install.packages("rpart")
+install.packages("rpart.plot")
+
+library(arules)
+library(readxl)
+library(rpart)
+library(rpart.plot)
+```
+
+
+2. Cargar el conjunto de datos
+2.1 Carga de Datos de sindicados 2024-2023
+```{r}
+
+data_sindicados_unida <- read_excel("Data\\mp-sindicados-2024-2023.xlsx")
+
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2024
+data_sindicados_2024 <- data_sindicados_unida[data_sindicados_unida$año_hecho == 2024, ]
+
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2023
+data_sindicados_2023 <- data_sindicados_unida[data_sindicados_unida$año_hecho == 2023, ]
+
+
+```
+2.2 Carga de Datos de agraviados 2024-2023
+
+```{r}
+data_agraviados_unida <- read_excel("Data\\mp-agraviados-2024-2023.xlsx")
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2024
+data_agraviados_2024 <- data_agraviados_unida[data_agraviados_unida$año_hecho == 2024, ]
+# Filtro para mantener solo las filas donde 'año_hecho' es igual a 2023
+data_agraviados_2023 <- data_agraviados_unida[data_agraviados_unida$año_hecho == 2023, ]
+```
+
+```{r}
+
+# -------------------------------
+# Evaluación automática de variables para árboles
+# -------------------------------
+
+df <- data_sindicados_unida      # <- tu dataset ya cargado
+target <- "sexo_sindicados"     # <- variable objetivo
+
+# Variables numéricas convertidas a factor (solo para chi-square)
+df_factor <- df
+df_factor[sapply(df_factor, is.numeric)] <- 
+  lapply(df_factor[sapply(df_factor, is.numeric)], as.factor)
+
+resultados <- data.frame(
+  variable = character(),
+  unique_values = integer(),
+  p_value = numeric(),
+  recomendacion = character(),
+  stringsAsFactors = FALSE
+)
+
+for (v in names(df)) {
+  
+  # saltar la variable objetivo
+  if (v == target) next
+  
+  # cantidad de valores únicos
+  uniq <- length(unique(df[[v]]))
+  
+  # intentar prueba chi-cuadrado
+  pval <- tryCatch({
+    chisq.test(df_factor[[v]], df_factor[[target]])$p.value
+  }, error = function(e) NA)
+  
+  # recomendación automática
+  recomend <- ifelse(
+    uniq <= 1, "❌ No sirve (sin variación)",
+    ifelse(
+      uniq > 80, "⚠️ Muchos niveles (poco útil)",
+      ifelse(
+        !is.na(pval) && pval < 0.05, "✅ Buena para el árbol",
+        "⚠️ Con poca relación al target"
+      )
+    )
+  )
+  
+  resultados <- rbind(resultados,
+                      data.frame(
+                        variable = v,
+                        unique_values = uniq,
+                        p_value = round(pval, 6),
+                        recomendacion = recomend
+                      ))
+}
+
+# Mostrar tabla ordenada
+resultados[order(resultados$recomendacion), ]
+
+```
+Arboles de decision
+
+Arbol 1
+```{r}
+#data_sindicados_2024 <- subset(data_sindicados_2024, sexo_sindicados %in% c(1,2))
+
+
+arbol_1 <- rpart(
+ mes_hecho   ~
+      g_edad_60ymas +
+      est_conyugal +
+      sexo_sindicados,
+ data = data_sindicados_2024, method = "class",
+ control = rpart.control(minsplit = 5, minbucket = 2, cp = 0.0010)
+)
+ 
+# Gráfica del árbol
+rpart.plot(
+  arbol_1,
+  type = 2,
+  extra = 0,
+  under = TRUE,
+  fallen.leaves = TRUE,
+  box.palette = "GnBu",
+  main = "Mes Hechos",
+  cex = 0.6,
+  legend.x = NA
+)
+
+# Caso de prueba (ejemplo)
+test1 <- data.frame(
+  g_edad_60ymas = c(11), 
+  est_conyugal = c(1), 
+  sexo_sindicados = c(1)
+)
+# Caso de prueba (ejemplo)
+test2 <- data.frame(
+  g_edad_60ymas = c(12), 
+  est_conyugal = c(2), 
+  sexo_sindicados = c(2)
+)
+
+# Predicción de probabilidades
+print("prediccion 1")
+result1 <- predict(arbol_1, test1, type = "prob")
+result1
+# Predicción de probabilidades
+print("prediccion 2")
+result2 <- predict(arbol_1, test2, type = "prob")
+result2
+
+
+```
+
+Arbol 2
+```{r}
+#data_sindicados_2024 <- subset(data_sindicados_2024, sexo_sindicados %in% c(1,2))
+
+
+arbol_2 <- rpart(
+ dia_sem_hecho ~ 
+   año_denuncia + 
+   dia_denuncia +
+   mes_hecho + 
+   depto_ocu_hecho,
+ data = data_sindicados_unida, method = "class"
+)
+ 
+# Gráfica del árbol
+rpart.plot(
+  arbol_2,
+  type = 2,
+  extra = 0,
+  under = TRUE,
+  fallen.leaves = TRUE,
+  box.palette = "GnBu",
+  main = "dia_sem_hecho",
+  cex = 0.6,
+  legend.x = NA
+)
+
+# Caso de prueba (ejemplo)
+arbol2_test1 <- data.frame(
+  año_denuncia = c(2024), 
+  dia_denuncia = c(2), 
+  mes_hecho = c(5),
+  depto_ocu_hecho=c(1)
+)
+
+arbol2_test2 <- data.frame(
+  año_denuncia = c(2024), 
+  dia_denuncia = c(1), 
+  mes_hecho = c(1),
+  depto_ocu_hecho=c(1)
+)
+
+# Predicción de probabilidades
+print("prediccion 1")
+arbol2_result1 <- predict(arbol_2, arbol2_test1, type = "prob")
+arbol2_result1
+
+# Predicción de probabilidades
+print("prediccion 2")
+arbol2_result2 <- predict(arbol_2, arbol2_test2, type = "prob")
+arbol2_result2
+
+
+```
+Arbol 3
+```{r}
+#data_sindicados_2024 <- subset(data_sindicados_2024, sexo_sindicados %in% c(1,2))
+
+
+arbol_3 <- rpart(
+ g_edad_de0_80ymas  ~ 
+   sexo_sindicados +
+   depto_ocu_hecho +
+   est_conyugal ,
+ data = data_sindicados_unida, method = "class",
+ control = rpart.control(minsplit = 2, minbucket = 2, cp = 0.001)
+)
+ 
+# Gráfica del árbol
+rpart.plot(
+  arbol_3,
+  type = 2,
+  extra = 0,
+  under = TRUE,
+  fallen.leaves = TRUE,
+  box.palette = "GnBu",
+  main = "g_edad_de0_80ymas Sindicados",
+  cex = 0.6,
+  legend.x = NA
+)
+
+# Caso de prueba (ejemplo)
+arbol3_test1 <- data.frame(
+  sexo_sindicados = c(1), 
+  depto_ocu_hecho = c(1), 
+  est_conyugal = c(1)
+)
+# Caso de prueba (ejemplo)
+arbol3_test2 <- data.frame(
+  sexo_sindicados = c(2), 
+  depto_ocu_hecho = c(9), 
+  est_conyugal = c(2)
+)
+# Predicción de probabilidades
+print("prediccion 1")
+arbol3_result1 <- predict(arbol_3, arbol3_test1, type = "prob")
+arbol3_result1
+# Predicción de probabilidades
+print("prediccion 2")
+arbol3_result2 <- predict(arbol_3, arbol3_test2, type = "prob")
+arbol3_result2
+
+
+```
+
+Arbol 4
+```{r}
+#data_clean <- subset(data_sindicados_unida, sexo_sindicados %in% c(1,2))
+
+arbol_4 <- rpart(
+ g_edad_de0_80ymas  ~ 
+   sexo_agraviados +
+   depto_ocu_hecho,
+ data = data_agraviados_unida, method = "class",
+ control = rpart.control(minsplit = 2, minbucket = 2, cp = 0.001)
+)
+
+# Gráfica del árbol
+rpart.plot(
+  arbol_4,
+  type = 2,
+  extra = 0,
+  under = TRUE,
+  fallen.leaves = TRUE,
+  box.palette = "GnBu",
+  main = "g_edad_de0_80ymas Agraviados",
+  cex = 0.6,
+  legend.x = NA
+)
+
+# Caso de prueba (ejemplo)
+arbol4_test1 <- data.frame(
+  sexo_agraviados = c(1), 
+  depto_ocu_hecho = c(1)
+)
+# Caso de prueba (ejemplo)
+arbol4_test2 <- data.frame(
+  sexo_agraviados = c(2), 
+  depto_ocu_hecho = c(9)
+)
+
+# Predicción de probabilidades
+print("prediccion 1")
+arbol4_result1 <- predict(arbol_4, arbol4_test1, type = "prob")
+arbol4_result1
+# Predicción de probabilidades
+print("prediccion 2")
+arbol4_result2 <- predict(arbol_4, arbol4_test2, type = "prob")
+arbol4_result2
+
+
+```
+
+
