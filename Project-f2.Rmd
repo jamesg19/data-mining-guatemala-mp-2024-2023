@@ -9,32 +9,27 @@ Fase 2 Mineria de Datos
 
 ```{r}
 # Instalar solo si no estan instalados previamente
-#if(!require(arules)) install.packages("arules")
-#if(!require(readxl)) install.packages("readxl")
-#if(!require(fim4r)) install.packages("fim4r")
-#if(!require(ggplot2)) install.packages("ggplot2")
-#if(!require(ggalt)) install.packages("ggalt")
-#if(!require(rpart)) install.packages("rpart")
-#if(!require(rpart.plot)) install.packages("rpart.plot")
+if(!require(arules)) install.packages("arules")
+if(!require(readxl)) install.packages("readxl")
+if(!require(fim4r)) install.packages("fim4r")
+if(!require(ggplot2)) install.packages("ggplot2")
+if(!require(ggalt)) install.packages("ggalt")
+if(!require(rpart)) install.packages("rpart")
+if(!require(rpart.plot)) install.packages("rpart.plot")
+if(!require(randomForest)) install.packages("randomForest")
+
 
 
 #Importar liberias
-#library(arules)
-#library(readxl)
-#library(fim4r)
-#library(ggplot2)
-#library(ggalt)
-#library(rpart)
-#library(rpart.plot)
-install.packages("arules")
-install.packages("readxl")
-install.packages("rpart")
-install.packages("rpart.plot")
-
 library(arules)
 library(readxl)
+library(fim4r)
+library(ggplot2)
+library(ggalt)
 library(rpart)
 library(rpart.plot)
+library(randomForest)
+
 ```
 
 
@@ -127,8 +122,6 @@ Arboles de decision
 Arbol 1
 ```{r}
 #data_sindicados_2024 <- subset(data_sindicados_2024, sexo_sindicados %in% c(1,2))
-
-
 arbol_1 <- rpart(
  mes_hecho   ~
       g_edad_60ymas +
@@ -163,7 +156,6 @@ test2 <- data.frame(
   est_conyugal = c(2), 
   sexo_sindicados = c(2)
 )
-
 # Predicción de probabilidades
 print("prediccion 1")
 result1 <- predict(arbol_1, test1, type = "prob")
@@ -172,15 +164,11 @@ result1
 print("prediccion 2")
 result2 <- predict(arbol_1, test2, type = "prob")
 result2
-
-
 ```
 
 Arbol 2
 ```{r}
 #data_sindicados_2024 <- subset(data_sindicados_2024, sexo_sindicados %in% c(1,2))
-
-
 arbol_2 <- rpart(
  dia_sem_hecho ~ 
    año_denuncia + 
@@ -189,7 +177,6 @@ arbol_2 <- rpart(
    depto_ocu_hecho,
  data = data_sindicados_unida, method = "class"
 )
- 
 # Gráfica del árbol
 rpart.plot(
   arbol_2,
@@ -202,7 +189,6 @@ rpart.plot(
   cex = 0.6,
   legend.x = NA
 )
-
 # Caso de prueba (ejemplo)
 arbol2_test1 <- data.frame(
   año_denuncia = c(2024), 
@@ -210,14 +196,12 @@ arbol2_test1 <- data.frame(
   mes_hecho = c(5),
   depto_ocu_hecho=c(1)
 )
-
 arbol2_test2 <- data.frame(
   año_denuncia = c(2024), 
   dia_denuncia = c(1), 
   mes_hecho = c(1),
   depto_ocu_hecho=c(1)
 )
-
 # Predicción de probabilidades
 print("prediccion 1")
 arbol2_result1 <- predict(arbol_2, arbol2_test1, type = "prob")
@@ -227,8 +211,6 @@ arbol2_result1
 print("prediccion 2")
 arbol2_result2 <- predict(arbol_2, arbol2_test2, type = "prob")
 arbol2_result2
-
-
 ```
 Arbol 3
 ```{r}
@@ -325,8 +307,66 @@ arbol4_result1
 print("prediccion 2")
 arbol4_result2 <- predict(arbol_4, arbol4_test2, type = "prob")
 arbol4_result2
+```
+
+1) Random Forest
+
+```{r}
+data1 <- data_sindicados_2024[, c(
+  "g_edad_de0_80ymas",
+  "sexo_sindicados",
+  "depto_ocu_hecho",
+  "est_conyugal")]
+
+data1$g_edad_de0_80ymas <- as.factor(data1$g_edad_de0_80ymas)
+data1 <- na.omit(data1)
+set.seed(100)
+data1 <- data1[sample(1:nrow(data1)),]
+
+index <- sample(1:nrow(data1), 0.80*nrow(data1))
+train1 <-data1[index,]
+test1 <-data1[-index,]
+
+#Entrenar el modelo RandomForest
+bosque1 <- randomForest(
+  g_edad_de0_80ymas  ~ 
+   sexo_sindicados +
+   depto_ocu_hecho +
+   est_conyugal,
+    data =train1,
+    ntree=100,
+    mtry=4
+)
+
+prueba <- predict(bosque1,test1)
 
 
+matriz1 <- table(test1$g_edad_de0_80ymas, prueba)
+matriz1
+
+pre1 <- sum(diag(matriz1)) / sum(matriz1)
+pre1
+
+#Test 1
+print("Test1")
+random_test1 <- data.frame(
+  sexo_sindicados=c(1),
+  depto_ocu_hecho=c(1),
+  est_conyugal=c(1)
+)
+result1_1 <- predict(bosque1, random_test1, type="prob")
+result1_1
+#Test 2
+print("Test2")
+random_test2 <- data.frame(
+  sexo_sindicados=c(2),
+  depto_ocu_hecho=c(9),
+  est_conyugal=c(2)
+)
+result1_2 <- predict(bosque1, random_test2, type="prob")
+result1_2
+
+plot(bosque1)
 ```
 
 
