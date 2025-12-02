@@ -369,4 +369,123 @@ result1_2
 plot(bosque1)
 ```
 
+2) Random Forest
+
+```{r}
+data2 <- data_sindicados_2024[, c(
+  "sexo_sindicados",
+  "depto_ocu_hecho",
+  "mes_hecho")]
+
+data2$sexo_sindicados <- as.factor(data2$sexo_sindicados)
+data2 <- na.omit(data2)
+set.seed(100)
+data2 <- data2[sample(1:nrow(data2)),]
+
+index2 <- sample(1:nrow(data2), 0.80*nrow(data2))
+train2 <-data2[index2,]
+test2 <-data2[-index2,]
+
+#Entrenar el modelo RandomForest
+bosque2 <- randomForest(
+  sexo_sindicados  ~ 
+   depto_ocu_hecho +
+   mes_hecho,
+    data =train2,
+    ntree=100,
+    mtry=4
+)
+
+prueba2 <- predict(bosque2,test2)
+
+
+matriz2 <- table(test2$sexo_sindicados, prueba2)
+matriz2
+
+pre2 <- sum(diag(matriz2)) / sum(matriz2)
+pre2
+
+#Test 1
+print("Test1")
+random_test2_1 <- data.frame(
+  depto_ocu_hecho=c(1),
+  mes_hecho=c(1)
+)
+result2_1 <- predict(bosque2, random_test2_1, type="prob")
+head(result2_1,25)
+#Test 2
+print("Test2")
+random_test2_2 <- data.frame(
+  depto_ocu_hecho=c(9),
+  mes_hecho=c(12)
+)
+result2_2 <- predict(bosque2, random_test2_2, type="prob")
+head(result2_2,25)
+
+plot(bosque2)
+```
+3) Random Forest
+
+```{r}
+
+data3 <- data_agraviados_2023[, c(
+  "sexo_agraviados",
+  "depto_ocu_hecho",
+  "mes_hecho")]
+
+data3$sexo_agraviados <- as.factor(data3$sexo_agraviados)
+
+data3 <- na.omit(data3)
+
+set.seed(100)
+data3 <- data3[sample(1:nrow(data3)),]
+
+index3 <- sample(1:nrow(data3), 0.80*nrow(data3))
+train3 <-data3[index3,]
+test3 <-data3[-index3,]
+
+#Entrenar el modelo RandomForest
+bosque3 <- randomForest(
+  sexo_agraviados  ~ 
+   depto_ocu_hecho +
+   mes_hecho,
+    data =train3,
+    ntree=100,
+    mtry=4
+)
+
+prueba3 <- predict(bosque3,test3)
+
+matriz3 <- table(test3$sexo_agraviados, prueba3)
+matriz3
+
+pre3 <- sum(diag(matriz3)) / sum(matriz3)
+pre3
+
+#Test 1
+print("Test1")
+random_test3_1 <- data.frame(
+  depto_ocu_hecho=c(1),
+  mes_hecho=c(1)
+)
+result3_1 <- predict(bosque3, random_test3_1, type="prob")
+head(result3_1,25)
+
+#Test 2
+print("Test2")
+random_test3_2 <- data.frame(
+  depto_ocu_hecho=c(9),
+  mes_hecho=c(12)
+)
+
+result3_2 <- predict(bosque3, random_test3_2, type="prob")
+head(result3_2,25)
+
+plot(bosque3)
+```
+
+```{r}
+
+
+```
 
