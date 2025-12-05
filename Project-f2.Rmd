@@ -18,8 +18,6 @@ if(!require(rpart)) install.packages("rpart")
 if(!require(rpart.plot)) install.packages("rpart.plot")
 if(!require(randomForest)) install.packages("randomForest")
 
-
-
 #Importar liberias
 library(arules)
 library(readxl)

@@ -40,6 +40,9 @@ El objetivo principal es aplicar el algoritmo de **reglas de asociación (Aprior
 | `fim4r` | Permite leer archivos Excel (.xlsx, .xls). | Acelerar el proceso de minería de reglas de asociación y el descubrimiento de conjuntos de ítems frecuentes con alta eficiencia.|
 | `ggplot2` | Sistema avanzado de visualización de datos basado en la gramática de gráficos. | Crear gráficos de dispersión, análisis de clusters y visualizaciones estadísticas. |
 | `ggalt` | Extiende ggplot2 con funciones adicionales para resaltar o delinear grupos. | Usado para `geom_encircle()`, que resalta los límites visuales de los clusters. |
+| `rpart` | Biblioteca para crear modelos de árboles de decisión. | Clasificar o predecir valores mediante árboles recursivos. |
+| `rpart.plot` | Herramienta para visualizar árboles generados con rpart. | Mostrar estructuras de árboles de forma clara y comprensible. |
+| `randomForest` | Implementa el algoritmo de bosques aleatorios. | Mejorar precisión combinando múltiples árboles para clasificación o regresión. |
 
 #### Instalación:
 ```r
